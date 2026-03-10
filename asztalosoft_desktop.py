@@ -250,21 +250,26 @@ class ZipHandler(FileSystemEventHandler):
         self.config = config
         self.prefix = config.get("zip_prefix", "work-")
 
+    def handle_zip(self, path):
+
+        name = os.path.basename(path)
+
+        if name.startswith(self.prefix) and name.endswith(".zip"):
+            process_zip(path, self.config)
+
     def on_created(self, event):
 
-        try:
+        if event.is_directory:
+            return
 
-            if event.is_directory:
-                return
+        self.handle_zip(event.src_path)
 
-            path = event.src_path
-            name = os.path.basename(path)
+    def on_moved(self, event):
 
-            if name.startswith(self.prefix) and name.endswith(".zip"):
-                process_zip(path, self.config)
+        if event.is_directory:
+            return
 
-        except:
-            log_exception("Watchdog handler error")
+        self.handle_zip(event.dest_path)
 
 
 # -------------------------------------------------
@@ -468,8 +473,32 @@ class App(QWidget):
 
         exe = sys.argv[0]
 
-        subprocess.run(f'"{exe}" service install', shell=True)
-        subprocess.run(f'"{exe}" service start', shell=True)
+        r = subprocess.run(
+            f"sc query {SERVICE_NAME}",
+            shell=True,
+            capture_output=True,
+            text=True
+        )
+
+        if r.returncode != 0:
+
+            # install
+            subprocess.run(
+                f'"{exe}" service install',
+                shell=True
+            )
+
+            # autostart beállítás
+            subprocess.run(
+                f'sc config {SERVICE_NAME} start= auto',
+                shell=True
+            )
+
+        # start
+        subprocess.run(
+            f'"{exe}" service start',
+            shell=True
+        )
 
         self.update_status()
 

@@ -19,3 +19,17 @@
 [2026-03-10 20:54:49] ZIP processed successfully
 [2026-03-10 20:55:08] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 (2) másolata másolata másolata.zip
 [2026-03-10 20:55:09] ZIP processed successfully
+[2026-03-10 21:01:30] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_346 másolata.zip
+[2026-03-10 21:01:31] ZIP processed successfully
+[2026-03-10 21:02:35] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_346 (1) másolata.zip
+[2026-03-10 21:02:36] ZIP processed successfully
+[2026-03-10 21:07:53] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 21:07:53] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 21:12:44] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 21:12:44] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 21:16:49] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 21:16:49] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 21:16:53] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 21:16:53] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 21:17:28] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_346 (2).zip
+[2026-03-10 21:17:29] ZIP processed successfully
