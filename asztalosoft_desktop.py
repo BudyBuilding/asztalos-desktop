@@ -7,14 +7,15 @@ import zipfile
 import threading
 import subprocess
 import ctypes
+import traceback
 
 # GUI
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit,
     QPushButton, QFileDialog, QGridLayout,
     QVBoxLayout, QGroupBox, QMessageBox
 )
+from PySide6.QtGui import QIcon
 
 # Service
 import win32serviceutil
@@ -32,13 +33,40 @@ from watchdog.events import FileSystemEventHandler
 # PATHS
 # -------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-os.chdir(BASE_DIR)
+BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
 
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 LOG_FILE = os.path.join(BASE_DIR, "log.txt")
+ICON_FILE = os.path.join(BASE_DIR, "logo.ico")
 
 SERVICE_NAME = "asztalosoft_processer"
+
+
+# -------------------------------------------------
+# DEFAULT CONFIG
+# -------------------------------------------------
+
+DEFAULT_CONFIG = {
+    "watch_folder": "",
+    "target_list": "",
+    "target_program": "",
+    "archive": "",
+    "zip_prefix": "work-"
+}
+
+
+# -------------------------------------------------
+# FILE INITIALIZATION
+# -------------------------------------------------
+
+def ensure_files():
+
+    if not os.path.exists(LOG_FILE):
+        open(LOG_FILE, "w", encoding="utf8").close()
+
+    if not os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "w", encoding="utf8") as f:
+            json.dump(DEFAULT_CONFIG, f, indent=2)
 
 
 # -------------------------------------------------
@@ -48,13 +76,20 @@ SERVICE_NAME = "asztalosoft_processer"
 def log(text):
 
     ts = time.strftime("%Y-%m-%d %H:%M:%S")
-
     line = f"[{ts}] {text}"
 
     print(line)
 
-    with open(LOG_FILE, "a", encoding="utf8") as f:
-        f.write(line + "\n")
+    try:
+        with open(LOG_FILE, "a", encoding="utf8") as f:
+            f.write(line + "\n")
+    except:
+        pass
+
+
+def log_exception(prefix="ERROR"):
+    log(prefix)
+    log(traceback.format_exc())
 
 
 # -------------------------------------------------
@@ -63,14 +98,35 @@ def log(text):
 
 def load_config():
 
-    if not os.path.exists(CONFIG_FILE):
-        return {}
+    ensure_files()
 
-    with open(CONFIG_FILE, encoding="utf8") as f:
-        return json.load(f)
+    log(f"Loading config from: {CONFIG_FILE}")
+
+    try:
+        with open(CONFIG_FILE, encoding="utf8") as f:
+            data = json.load(f)
+
+        # hiányzó kulcsok pótlása
+        changed = False
+        for k, v in DEFAULT_CONFIG.items():
+            if k not in data:
+                data[k] = v
+                changed = True
+
+        if changed:
+            save_config(data)
+
+        log(f"Config loaded: {data}")
+        return data
+
+    except:
+        log_exception("Failed to load config")
+        return DEFAULT_CONFIG.copy()
 
 
 def save_config(data):
+
+    log(f"Saving config: {data}")
 
     with open(CONFIG_FILE, "w", encoding="utf8") as f:
         json.dump(data, f, indent=2)
@@ -102,91 +158,86 @@ def wait_for_download(path, retries=10):
 
 def process_zip(path, config):
 
-    log(f"Processing ZIP: {path}")
+    try:
 
-    if not wait_for_download(path):
-        log("File still downloading")
-        return
+        log(f"Processing ZIP: {path}")
 
-    temp_folder = path + "_tmp"
+        if not wait_for_download(path):
+            log("File still downloading")
+            return
 
-    if os.path.exists(temp_folder):
+        temp_folder = path + "_tmp"
+
+        if os.path.exists(temp_folder):
+            shutil.rmtree(temp_folder)
+
+        os.makedirs(temp_folder)
+
+        with zipfile.ZipFile(path, 'r') as zip_ref:
+            zip_ref.extractall(temp_folder)
+
+        folders = [
+            f for f in os.listdir(temp_folder)
+            if os.path.isdir(os.path.join(temp_folder, f))
+        ]
+
+        if len(folders) == 0:
+            log("ZIP is empty")
+            return
+
+        root_folder = os.path.join(temp_folder, folders[0])
+
+        subfolders = [
+            f for f in os.listdir(root_folder)
+            if os.path.isdir(os.path.join(root_folder, f))
+        ]
+
+        folder_list = None
+        folder_program = None
+
+        for f in subfolders:
+
+            name = f.lower()
+
+            if "lista" in name:
+                folder_list = os.path.join(root_folder, f)
+
+            if "program" in name:
+                folder_program = os.path.join(root_folder, f)
+
+        if not folder_list or not folder_program:
+            log("Missing required folders: program / lista")
+            return
+
+        target_list = config["target_list"]
+        target_program = config["target_program"]
+
+        os.makedirs(target_list, exist_ok=True)
+        os.makedirs(target_program, exist_ok=True)
+
+        for file in os.listdir(folder_list):
+            shutil.move(os.path.join(folder_list, file),
+                        os.path.join(target_list, file))
+
+        for file in os.listdir(folder_program):
+            shutil.move(os.path.join(folder_program, file),
+                        os.path.join(target_program, file))
+
+        archive = config["archive"]
+        os.makedirs(archive, exist_ok=True)
+
+        archive_path = os.path.join(archive, os.path.basename(path))
+
+        shutil.copy2(path, archive_path)
+
+        os.remove(path)
+
         shutil.rmtree(temp_folder)
 
-    os.makedirs(temp_folder)
+        log("ZIP processed successfully")
 
-    with zipfile.ZipFile(path, 'r') as zip_ref:
-        zip_ref.extractall(temp_folder)
-
-    folders = [
-        f for f in os.listdir(temp_folder)
-        if os.path.isdir(os.path.join(temp_folder, f))
-    ]
-
-    if len(folders) == 0:
-        log("ZIP is empty")
-        return
-
-    root_folder = os.path.join(temp_folder, folders[0])
-
-    subfolders = [
-        f for f in os.listdir(root_folder)
-        if os.path.isdir(os.path.join(root_folder, f))
-    ]
-
-    folder_list = None
-    folder_program = None
-
-    for f in subfolders:
-
-        name = f.lower()
-
-        if "lista" in name:
-            folder_list = os.path.join(root_folder, f)
-
-        if "program" in name:
-            folder_program = os.path.join(root_folder, f)
-
-    if not folder_list or not folder_program:
-        log("Missing required folders: program / lista")
-        return
-
-    target_list = config["target_list"]
-    target_program = config["target_program"]
-
-    os.makedirs(target_list, exist_ok=True)
-    os.makedirs(target_program, exist_ok=True)
-
-    for file in os.listdir(folder_list):
-
-        src = os.path.join(folder_list, file)
-        dst = os.path.join(target_list, file)
-
-        shutil.move(src, dst)
-
-    for file in os.listdir(folder_program):
-
-        src = os.path.join(folder_program, file)
-        dst = os.path.join(target_program, file)
-
-        shutil.move(src, dst)
-
-    archive = config["archive"]
-    os.makedirs(archive, exist_ok=True)
-
-    archive_path = os.path.join(archive, os.path.basename(path))
-
-    shutil.copy2(path, archive_path)
-
-    log(f"ZIP archived: {archive_path}")
-
-    os.remove(path)
-
-    log(f"Original ZIP deleted: {path}")
-
-    shutil.rmtree(temp_folder)
-
-    log(f"ZIP processed successfully: {path}")
+    except:
+        log_exception("ZIP processing failed")
 
 
 # -------------------------------------------------
@@ -201,20 +252,19 @@ class ZipHandler(FileSystemEventHandler):
 
     def on_created(self, event):
 
-        if event.is_directory:
-            return
+        try:
 
-        path = event.src_path
-        name = os.path.basename(path)
+            if event.is_directory:
+                return
 
-        if name.startswith(self.prefix) and name.endswith(".zip"):
+            path = event.src_path
+            name = os.path.basename(path)
 
-            log(f"New ZIP detected: {path}")
-
-            try:
+            if name.startswith(self.prefix) and name.endswith(".zip"):
                 process_zip(path, self.config)
-            except Exception as e:
-                log(f"Processing error: {e}")
+
+        except:
+            log_exception("Watchdog handler error")
 
 
 # -------------------------------------------------
@@ -223,7 +273,7 @@ class ZipHandler(FileSystemEventHandler):
 
 class AsztalosoftService(win32serviceutil.ServiceFramework):
 
-    _svc_name_ = "asztalosoft_processer"
+    _svc_name_ = SERVICE_NAME
     _svc_display_name_ = "Asztalosoft ZIP Processor"
     _svc_description_ = "Processes incoming ZIP files automatically"
 
@@ -233,15 +283,12 @@ class AsztalosoftService(win32serviceutil.ServiceFramework):
 
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
         self.running = True
-
         self.observer = None
         self.worker = None
 
     def SvcStop(self):
 
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-
-        log("Service stopping")
 
         self.running = False
 
@@ -253,65 +300,42 @@ class AsztalosoftService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
 
-        servicemanager.LogInfoMsg("Service starting")
-
-        # jelzés hogy indul
         self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
 
-        try:
-            self.worker = threading.Thread(target=self.main)
-            self.worker.daemon = True
-            self.worker.start()
+        self.worker = threading.Thread(target=self.main)
+        self.worker.start()
 
-            # most már fut
-            self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+        self.ReportServiceStatus(win32service.SERVICE_RUNNING)
 
-            win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
-
-        except Exception as e:
-            log(f"Service failed: {e}")
+        win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
 
     def main(self):
 
-        try:
+        config = load_config()
 
-            config = load_config()
-            watch_folder = config.get("watch_folder")
+        watch_folder = config.get("watch_folder")
 
-            if not watch_folder:
-                log("watch_folder missing in config")
-
-                while self.running:
-                    time.sleep(5)
-
-                return
-
-            log(f"Watching folder: {watch_folder}")
-
-            handler = ZipHandler(config)
-
-            self.observer = Observer()
-            self.observer.schedule(handler, watch_folder, recursive=False)
-            self.observer.start()
-
+        if not watch_folder:
             while self.running:
                 time.sleep(5)
+            return
 
-        except Exception as e:
+        handler = ZipHandler(config)
 
-            log(f"Service error: {e}")
+        self.observer = Observer()
+        self.observer.schedule(handler, watch_folder, recursive=False)
+        self.observer.start()
+
+        while self.running:
+            time.sleep(5)
+
+        self.observer.stop()
+        self.observer.join()
 
 
 # -------------------------------------------------
 # ADMIN CHECK
 # -------------------------------------------------
-
-def is_admin():
-
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
 
 def ensure_admin():
 
@@ -335,6 +359,7 @@ def ensure_admin():
 
         sys.exit()
 
+
 # -------------------------------------------------
 # GUI
 # -------------------------------------------------
@@ -347,6 +372,9 @@ class App(QWidget):
 
         self.setWindowTitle("Asztalosoft - Fájlkezelő")
         self.setMinimumWidth(700)
+
+        if os.path.exists(ICON_FILE):
+            self.setWindowIcon(QIcon(ICON_FILE))
 
         config = load_config()
 
@@ -406,7 +434,7 @@ class App(QWidget):
         self.setLayout(layout)
 
         self.update_status()
-        
+
     def browse(self, field):
 
         folder = QFileDialog.getExistingDirectory(self)
@@ -440,24 +468,13 @@ class App(QWidget):
 
         exe = sys.argv[0]
 
-        # ellenőrizzük létezik-e
-        r = subprocess.run(
-            f"sc query {SERVICE_NAME}",
-            shell=True,
-            capture_output=True,
-            text=True
-        )
-
-        if r.returncode != 0:
-            # service nincs telepítve
-            subprocess.run(f'"{exe}" service install', shell=True)
-
-        # indítás
+        subprocess.run(f'"{exe}" service install', shell=True)
         subprocess.run(f'"{exe}" service start', shell=True)
 
         self.update_status()
 
     def stop_service(self):
+
         self.service_cmd("stop")
 
     def update_status(self):
@@ -469,9 +486,7 @@ class App(QWidget):
             text=True
         )
 
-        out = r.stdout
-
-        if "RUNNING" in out:
+        if "RUNNING" in r.stdout:
             self.status.setText("Service: FUT")
         else:
             self.status.setText("Service: NEM FUT")
@@ -490,6 +505,9 @@ def run_gui():
 
     app = QApplication(sys.argv)
 
+    if os.path.exists(ICON_FILE):
+        app.setWindowIcon(QIcon(ICON_FILE))
+
     w = App()
     w.show()
 
@@ -498,18 +516,29 @@ def run_gui():
 
 def main():
 
-    ensure_admin()
+    ensure_files()
 
+    # ha CLI service parancs
     if len(sys.argv) > 1 and sys.argv[1] == "service":
 
-        sys.argv[0] = sys.executable
         sys.argv.pop(1)
-
         win32serviceutil.HandleCommandLine(AsztalosoftService)
+        return
 
-    else:
+    # ha a Windows service manager indította
+    if len(sys.argv) == 1:
 
-        run_gui()
+        try:
+            servicemanager.Initialize()
+            servicemanager.PrepareToHostSingle(AsztalosoftService)
+            servicemanager.StartServiceCtrlDispatcher()
+            return
+        except Exception:
+            pass
+
+    # különben GUI
+    ensure_admin()
+    run_gui()
 
 
 if __name__ == "__main__":

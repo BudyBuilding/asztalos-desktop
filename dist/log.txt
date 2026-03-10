@@ -1,11 +1,21 @@
-[2026-03-10 19:43:48] Watching folder: C:/Users/ai/Downloads
-[2026-03-10 19:43:52] Service stopping
-[2026-03-10 19:50:09] Watching folder: C:/Users/ai/Downloads
-[2026-03-10 19:50:22] New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
-[2026-03-10 19:50:22] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
-[2026-03-10 19:50:23] ZIP archived: C:/Users/ai/Desktop/Archivum\work-Mihalcu_Master_Vendeg_283 másolata.zip
-[2026-03-10 19:50:23] Original ZIP deleted: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
-[2026-03-10 19:50:23] ZIP processed successfully: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
-[2026-03-10 19:50:26] Service stopping
-[2026-03-10 19:54:08] Watching folder: C:/Users/ai/Downloads
-[2026-03-10 19:54:09] Service stopping
+[2026-03-10 20:46:16] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:46:16] Config loaded: {'watch_folder': '', 'target_list': '', 'target_program': '', 'archive': '', 'zip_prefix': 'work-'}
+[2026-03-10 20:46:59] Saving config: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:47:08] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:47:08] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:47:51] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:47:51] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:51:29] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:51:29] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:51:35] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:51:35] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:51:58] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata.zip
+[2026-03-10 20:51:59] ZIP processed successfully
+[2026-03-10 20:52:09] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata (2).zip
+[2026-03-10 20:52:10] ZIP processed successfully
+[2026-03-10 20:53:25] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\config.json
+[2026-03-10 20:53:25] Config loaded: {'watch_folder': 'C:/Users/ai/Downloads', 'target_list': 'C:/Users/ai/Desktop/Lista', 'target_program': 'C:/Users/ai/Desktop/Program', 'archive': 'C:/Users/ai/Desktop/Archivum', 'zip_prefix': 'work-'}
+[2026-03-10 20:54:48] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 (2) másolata másolata másolata.zip
+[2026-03-10 20:54:49] ZIP processed successfully
+[2026-03-10 20:55:08] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 (2) másolata másolata másolata.zip
+[2026-03-10 20:55:09] ZIP processed successfully
