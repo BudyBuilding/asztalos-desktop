@@ -1,0 +1,27 @@
+2026-03-10 17:05:56  Service started
+2026-03-10 17:05:56  Watching folder: C:/Users/ai/Downloads
+2026-03-10 17:06:35  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:06:35  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:06:36  Invalid ZIP structure
+2026-03-10 17:08:08  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata.zip
+2026-03-10 17:08:08  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata.zip
+2026-03-10 17:08:09  Invalid ZIP structure
+2026-03-10 17:08:33  Service started
+2026-03-10 17:08:33  Watching folder: C:/Users/ai/Downloads
+2026-03-10 17:08:37  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata.zip
+2026-03-10 17:08:37  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata.zip
+2026-03-10 17:08:38  Processing error: [WinError 3] A rendszer nem találja a megadott elérési utat: 'C:/Users/ai/Downloads\\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata.zip_tmp\\lista'
+2026-03-10 17:11:05  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata.zip
+2026-03-10 17:11:05  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata.zip
+2026-03-10 17:11:06  Processing error: [WinError 3] A rendszer nem találja a megadott elérési utat: 'C:/Users/ai/Downloads\\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata.zip_tmp\\lista'
+2026-03-10 17:12:30  Service started
+2026-03-10 17:12:30  Watching folder: C:/Users/ai/Downloads
+2026-03-10 17:12:34  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata másolata.zip
+2026-03-10 17:12:34  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata másolata.zip
+2026-03-10 17:12:35  ZIP processed successfully: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata másolata másolata másolata másolata.zip
+2026-03-10 17:12:57  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:12:57  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:12:58  ZIP processed successfully: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:13:19  New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:13:19  Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+2026-03-10 17:13:20  ZIP processed successfully: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip

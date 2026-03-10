@@ -1,0 +1,11 @@
+[2026-03-10 19:43:48] Watching folder: C:/Users/ai/Downloads
+[2026-03-10 19:43:52] Service stopping
+[2026-03-10 19:50:09] Watching folder: C:/Users/ai/Downloads
+[2026-03-10 19:50:22] New ZIP detected: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+[2026-03-10 19:50:22] Processing ZIP: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+[2026-03-10 19:50:23] ZIP archived: C:/Users/ai/Desktop/Archivum\work-Mihalcu_Master_Vendeg_283 másolata.zip
+[2026-03-10 19:50:23] Original ZIP deleted: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+[2026-03-10 19:50:23] ZIP processed successfully: C:/Users/ai/Downloads\work-Mihalcu_Master_Vendeg_283 másolata.zip
+[2026-03-10 19:50:26] Service stopping
+[2026-03-10 19:54:08] Watching folder: C:/Users/ai/Downloads
+[2026-03-10 19:54:09] Service stopping
