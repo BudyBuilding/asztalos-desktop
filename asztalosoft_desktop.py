@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon
 
 # Service
+import win32com.client
 import win32serviceutil
 import win32service
 import win32event
@@ -441,11 +442,37 @@ class App(QWidget):
         self.update_status()
 
     def browse(self, field):
+        try:
+            shell = win32com.client.Dispatch("Shell.Application")
 
-        folder = QFileDialog.getExistingDirectory(self)
+            # 0 = Desktop gyökér
+            # Így látszik:
+            # - Ez a gép
+            # - helyi meghajtók
+            # - hálózati meghajtók
+            # - Hálózat
+            folder = shell.BrowseForFolder(
+                0,
+                "Válassz mappát",
+                0,
+                0
+            )
 
-        if folder:
-            field.setText(folder)
+            if folder is None:
+                return
+
+            selected_path = folder.Self.Path
+
+            if selected_path:
+                field.setText(selected_path)
+
+        except Exception as e:
+            log(f"Mappaválasztó hiba: {e}")
+            QMessageBox.critical(
+                self,
+                "Hiba",
+                f"Nem sikerült megnyitni a mappaválasztót:\n{e}"
+            )
 
     def save(self):
 

@@ -1,0 +1,2 @@
+[2026-09-15 21:25:28] Loading config from: C:\Users\ai\Desktop\asztalos-repo\asztalos-desktop\dist\Asztalosoft_Desktop\config.json
+[2026-09-15 21:25:28] Config loaded: {'watch_folder': '', 'target_list': '', 'target_program': '', 'archive': '', 'zip_prefix': 'work-'}
