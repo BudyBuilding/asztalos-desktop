@@ -311,6 +311,12 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib\\decimal.py',
    'PYMODULE'),
+  ('desktop_ui',
+   'C:\\Users\\ai\\Desktop\\asztalos-repo\\asztalos-desktop\\desktop_ui.py',
+   'PYMODULE'),
+  ('desktop_worker',
+   'C:\\Users\\ai\\Desktop\\asztalos-repo\\asztalos-desktop\\desktop_worker.py',
+   'PYMODULE'),
   ('difflib',
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib\\difflib.py',
@@ -865,6 +871,9 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib\\selectors.py',
    'PYMODULE'),
+  ('service_account',
+   'C:\\Users\\ai\\Desktop\\asztalos-repo\\asztalos-desktop\\service_account.py',
+   'PYMODULE'),
   ('setuptools',
    'C:\\Users\\ai\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages\\setuptools\\__init__.py',
    'PYMODULE'),
@@ -1376,6 +1385,9 @@
   ('typing',
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_3.12.2800.0_x64__qbz5n2kfra8p0\\Lib\\typing.py',
+   'PYMODULE'),
+  ('typing_extensions',
+   'C:\\Users\\ai\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python312\\site-packages\\typing_extensions.py',
    'PYMODULE'),
   ('unittest',
    'C:\\Program '

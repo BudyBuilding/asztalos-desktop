@@ -24,6 +24,11 @@ import win32service
 import win32event
 import servicemanager
 import win32timezone
+import win32api
+import win32process
+from win32com.shell import shell, shellcon
+import win32wnet
+import pywintypes
 
 # Watchdog
 from watchdog.observers import Observer
@@ -34,10 +39,16 @@ from watchdog.events import FileSystemEventHandler
 # PATHS
 # -------------------------------------------------
 
-BASE_DIR = os.path.dirname(os.path.abspath(sys.executable))
+BASE_DIR = os.path.dirname(
+    os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
+)
 
-CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
-LOG_FILE = os.path.join(BASE_DIR, "log.txt")
+APP_DATA_DIR = os.path.join(
+    os.environ.get("APPDATA", os.path.expanduser("~")),
+    "Asztalosoft",
+)
+CONFIG_FILE = os.path.join(APP_DATA_DIR, "config.json")
+LOG_FILE = os.path.join(APP_DATA_DIR, "log.txt")
 ICON_FILE = os.path.join(BASE_DIR, "logo.ico")
 
 SERVICE_NAME = "asztalosoft_processer"
@@ -51,8 +62,10 @@ DEFAULT_CONFIG = {
     "watch_folder": "",
     "target_list": "",
     "target_program": "",
+    "target_pdf": "",
     "archive": "",
-    "zip_prefix": "work-"
+    "zip_prefix": "work-",
+    "autostart": False,
 }
 
 
@@ -62,12 +75,27 @@ DEFAULT_CONFIG = {
 
 def ensure_files():
 
+    os.makedirs(APP_DATA_DIR, exist_ok=True)
+
     if not os.path.exists(LOG_FILE):
         open(LOG_FILE, "w", encoding="utf8").close()
 
     if not os.path.exists(CONFIG_FILE):
+        data = DEFAULT_CONFIG.copy()
+        legacy_config = os.path.join(BASE_DIR, "config.json")
+        if os.path.abspath(legacy_config) != os.path.abspath(CONFIG_FILE) and os.path.isfile(legacy_config):
+            try:
+                with open(legacy_config, encoding="utf8") as f:
+                    legacy_data = json.load(f)
+                if isinstance(legacy_data, dict):
+                    data.update(legacy_data)
+                    log("Migrated configuration from the application folder to user AppData.")
+                else:
+                    log("Legacy config migration skipped: config.json does not contain an object.")
+            except (OSError, ValueError) as error:
+                log(f"Legacy config migration failed: {error}")
         with open(CONFIG_FILE, "w", encoding="utf8") as f:
-            json.dump(DEFAULT_CONFIG, f, indent=2)
+            json.dump(data, f, indent=2)
 
 
 # -------------------------------------------------
@@ -129,6 +157,7 @@ def save_config(data):
 
     log(f"Saving config: {data}")
 
+    os.makedirs(APP_DATA_DIR, exist_ok=True)
     with open(CONFIG_FILE, "w", encoding="utf8") as f:
         json.dump(data, f, indent=2)
 
@@ -195,6 +224,7 @@ def process_zip(path, config):
 
         folder_list = None
         folder_program = None
+        folder_pdf = None
 
         for f in subfolders:
 
@@ -206,15 +236,24 @@ def process_zip(path, config):
             if "program" in name:
                 folder_program = os.path.join(root_folder, f)
 
+            if "pdf" in name:
+                folder_pdf = os.path.join(root_folder, f)
+
         if not folder_list or not folder_program:
             log("Missing required folders: program / lista")
             return
+
+        target_pdf = (config.get("target_pdf") or "").strip()
+        if folder_pdf and not target_pdf:
+            raise ValueError("A ZIP PDF mappájához nincs célmappa beállítva.")
 
         target_list = config["target_list"]
         target_program = config["target_program"]
 
         os.makedirs(target_list, exist_ok=True)
         os.makedirs(target_program, exist_ok=True)
+        if folder_pdf:
+            os.makedirs(target_pdf, exist_ok=True)
 
         for file in os.listdir(folder_list):
             shutil.move(os.path.join(folder_list, file),
@@ -223,6 +262,11 @@ def process_zip(path, config):
         for file in os.listdir(folder_program):
             shutil.move(os.path.join(folder_program, file),
                         os.path.join(target_program, file))
+
+        if folder_pdf:
+            for file in os.listdir(folder_pdf):
+                shutil.move(os.path.join(folder_pdf, file),
+                            os.path.join(target_pdf, file))
 
         archive = config["archive"]
         os.makedirs(archive, exist_ok=True)
@@ -370,6 +414,18 @@ def ensure_admin():
 # GUI
 # -------------------------------------------------
 
+def normalize_folder_path(path):
+    """Resolve mapped drives to UNC paths, preserving local folders."""
+    path = path.strip().strip('"')
+    if not path:
+        return ""
+    path = os.path.normpath(path)
+    try:
+        return win32wnet.WNetGetUniversalName(path)
+    except pywintypes.error:
+        return path
+
+
 class App(QWidget):
 
     def __init__(self):
@@ -392,17 +448,21 @@ class App(QWidget):
         self.watch = QLineEdit(config.get("watch_folder", ""))
         self.target_list = QLineEdit(config.get("target_list", ""))
         self.target_program = QLineEdit(config.get("target_program", ""))
+        self.target_pdf = QLineEdit(config.get("target_pdf", ""))
         self.archive = QLineEdit(config.get("archive", ""))
 
         rows = [
             ("Forrás mappa", self.watch),
             ("Cél mappa - Lista", self.target_list),
             ("Cél mappa - Program", self.target_program),
+            ("Cél mappa - PDF", self.target_pdf),
             ("Archívum mappa", self.archive)
         ]
 
         for i, (text, field) in enumerate(rows):
 
+            field.setPlaceholderText(r"C:\mappa vagy \\szerver\megosztás\mappa")
+            field.setToolTip("Helyi vagy hálózati mappa. A hálózati útvonal közvetlenül is beírható.")
             label = QLabel(text)
             button = QPushButton("Tallózás")
 
@@ -437,34 +497,26 @@ class App(QWidget):
 
         layout.addLayout(buttons)
 
+        account_btn = QPushButton("Hálózati hozzáférés / szolgáltatásfiók")
+        account_btn.clicked.connect(lambda: self.service_cmd("account"))
+        layout.addWidget(account_btn)
+
         self.setLayout(layout)
 
         self.update_status()
 
     def browse(self, field):
         try:
-            shell = win32com.client.Dispatch("Shell.Application")
-
-            # 0 = Desktop gyökér
-            # Így látszik:
-            # - Ez a gép
-            # - helyi meghajtók
-            # - hálózati meghajtók
-            # - Hálózat
-            folder = shell.BrowseForFolder(
-                0,
+            # Native Explorer picker supports Network and UNC address entry.
+            selected_path = QFileDialog.getExistingDirectory(
+                self,
                 "Válassz mappát",
-                0,
-                0
+                field.text().strip().strip('"'),
+                QFileDialog.Option.ShowDirsOnly
             )
 
-            if folder is None:
-                return
-
-            selected_path = folder.Self.Path
-
             if selected_path:
-                field.setText(selected_path)
+                field.setText(normalize_folder_path(selected_path))
 
         except Exception as e:
             log(f"Mappaválasztó hiba: {e}")
@@ -477,10 +529,11 @@ class App(QWidget):
     def save(self):
 
         data = {
-            "watch_folder": self.watch.text(),
-            "target_list": self.target_list.text(),
-            "target_program": self.target_program.text(),
-            "archive": self.archive.text(),
+            "watch_folder": normalize_folder_path(self.watch.text()),
+            "target_list": normalize_folder_path(self.target_list.text()),
+            "target_program": normalize_folder_path(self.target_program.text()),
+            "target_pdf": normalize_folder_path(self.target_pdf.text()),
+            "archive": normalize_folder_path(self.archive.text()),
             "zip_prefix": "work-"
         }
 
@@ -489,45 +542,36 @@ class App(QWidget):
         QMessageBox.information(self, "Info", "Beállítások elmentve")
 
     def service_cmd(self, cmd):
-
-        exe = sys.argv[0]
-
-        subprocess.run(f'"{exe}" service {cmd}', shell=True)
-
+        # Keep Explorer and the picker in the user's normal logon session.
+        args = [] if getattr(sys, "frozen", False) else [os.path.abspath(__file__)]
+        args.extend(["--manage-service", cmd])
+        try:
+            process = shell.ShellExecuteEx(
+                fMask=shellcon.SEE_MASK_NOCLOSEPROCESS,
+                hwnd=int(self.winId()),
+                lpVerb="runas",
+                lpFile=sys.executable,
+                lpParameters=subprocess.list2cmdline(args),
+                nShow=1 if cmd == "account" else 0,
+            )["hProcess"]
+            try:
+                win32event.WaitForSingleObject(process, win32event.INFINITE)
+                if win32process.GetExitCodeProcess(process) != 0:
+                    details = ""
+                    try:
+                        with open(LOG_FILE, encoding="utf8") as f:
+                            details = "".join(f.readlines()[-15:])
+                    except OSError:
+                        pass
+                    raise RuntimeError("A szolgáltatás művelete sikertelen.\n" + details)
+            finally:
+                win32api.CloseHandle(process)
+        except Exception as e:
+            QMessageBox.warning(self, "Szolgáltatás", str(e))
         self.update_status()
 
     def start_service(self):
-
-        exe = sys.argv[0]
-
-        r = subprocess.run(
-            f"sc query {SERVICE_NAME}",
-            shell=True,
-            capture_output=True,
-            text=True
-        )
-
-        if r.returncode != 0:
-
-            # install
-            subprocess.run(
-                f'"{exe}" service install',
-                shell=True
-            )
-
-            # autostart beállítás
-            subprocess.run(
-                f'sc config {SERVICE_NAME} start= auto',
-                shell=True
-            )
-
-        # start
-        subprocess.run(
-            f'"{exe}" service start',
-            shell=True
-        )
-
-        self.update_status()
+        self.service_cmd("start")
 
     def stop_service(self):
 
@@ -570,9 +614,119 @@ def run_gui():
     sys.exit(app.exec())
 
 
+def manage_service(command):
+    """Run only service mutations in the elevated helper process."""
+    if command not in ("start", "stop", "register"):
+        raise ValueError("Ismeretlen szolgáltatásművelet")
+    def run(args):
+        result = subprocess.run(args, capture_output=True, text=True)
+        if result.returncode:
+            raise RuntimeError(f"{subprocess.list2cmdline(args)}\n{result.stdout}{result.stderr}")
+
+    if command in ("start", "register"):
+        if not getattr(sys, "frozen", False):
+            raise RuntimeError("A szolgáltatás indításához a buildelt EXE-t használd.")
+        result = subprocess.run(
+            ["sc.exe", "query", SERVICE_NAME], capture_output=True, text=True
+        )
+        binary_path = subprocess.list2cmdline([sys.executable])
+        if result.returncode == 1060:
+            run(["sc.exe", "create", SERVICE_NAME, "binPath=", binary_path,
+                 "start=", "auto", "DisplayName=", AsztalosoftService._svc_display_name_])
+        elif result.returncode:
+            raise RuntimeError(result.stdout + result.stderr)
+        else:
+            # Repair stale registrations left by earlier executable names/builds.
+            run(["sc.exe", "config", SERVICE_NAME, "binPath=", binary_path,
+                 "start=", "auto"])
+
+    if command == "register":
+        return
+    desired = win32service.SERVICE_RUNNING if command == "start" else win32service.SERVICE_STOPPED
+    if win32serviceutil.QueryServiceStatus(SERVICE_NAME)[1] == desired:
+        return
+    run(["sc.exe", command, SERVICE_NAME])
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        status = win32serviceutil.QueryServiceStatus(SERVICE_NAME)
+        if status[1] == desired:
+            log(f"Service {command}: OK")
+            return
+        if command == "start" and status[1] == win32service.SERVICE_STOPPED:
+            raise RuntimeError(f"A szolgáltatás leállt. Windows hibakód: {status[3]}, szolgáltatás hibakód: {status[4]}")
+        time.sleep(0.25)
+    raise RuntimeError("A szolgáltatás 30 másodpercen belül nem érte el a kért állapotot.")
+
+
+def retire_legacy_service():
+    """Disable and stop the former service so it cannot process files in parallel."""
+    manager = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_CONNECT)
+    try:
+        try:
+            service = win32service.OpenService(
+                manager,
+                SERVICE_NAME,
+                win32service.SERVICE_CHANGE_CONFIG
+                | win32service.SERVICE_QUERY_STATUS
+                | win32service.SERVICE_STOP,
+            )
+        except win32service.error as error:
+            if getattr(error, "winerror", None) == 1060:
+                return
+            raise
+        try:
+            win32service.ChangeServiceConfig(
+                service,
+                win32service.SERVICE_NO_CHANGE,
+                win32service.SERVICE_DISABLED,
+                win32service.SERVICE_NO_CHANGE,
+                None,
+                None,
+                0,
+                None,
+                None,
+                None,
+                None,
+            )
+            if win32service.QueryServiceStatus(service)[1] != win32service.SERVICE_STOPPED:
+                win32service.ControlService(service, win32service.SERVICE_CONTROL_STOP)
+                deadline = time.monotonic() + 30
+                while time.monotonic() < deadline:
+                    if win32service.QueryServiceStatus(service)[1] == win32service.SERVICE_STOPPED:
+                        log("Legacy service disabled and stopped")
+                        return
+                    time.sleep(0.25)
+                raise RuntimeError("A régi szolgáltatás 30 másodpercen belül nem állt le.")
+            log("Legacy service disabled; it was already stopped")
+        finally:
+            win32service.CloseServiceHandle(service)
+    finally:
+        win32service.CloseServiceHandle(manager)
+
+
 def main():
 
     ensure_files()
+
+    if len(sys.argv) == 2 and sys.argv[1] == "--retire-service":
+        try:
+            retire_legacy_service()
+        except Exception:
+            log(traceback.format_exc())
+            sys.exit(1)
+        return
+
+    if len(sys.argv) == 3 and sys.argv[1] == "--manage-service":
+        try:
+            if sys.argv[2] == "account":
+                from service_account import configure_account
+                configure_account(SERVICE_NAME, manage_service)
+                return
+            manage_service(sys.argv[2])
+        except Exception:
+            log(traceback.format_exc())
+            sys.exit(1)
+        return
 
     # ha CLI service parancs
     if len(sys.argv) > 1 and sys.argv[1] == "service":
@@ -592,9 +746,9 @@ def main():
         except Exception:
             pass
 
-    # különben GUI
-    ensure_admin()
-    run_gui()
+    from desktop_ui import run_gui as run_desktop_gui
+
+    run_desktop_gui(sys.modules[__name__])
 
 
 if __name__ == "__main__":
